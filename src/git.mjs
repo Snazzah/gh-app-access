@@ -5,7 +5,26 @@ import path from "node:path";
 import { promisify } from "node:util";
 
 const execFileAsync = promisify(execFile);
-const CREDENTIAL_HELPER = "!npx -y @snazzah/gh-app-access credential";
+const CREDENTIAL_COMMAND = "@snazzah/gh-app-access credential";
+
+export function getCredentialHelper(env = process.env) {
+  const userAgent = (env.npm_config_user_agent || "").toLowerCase();
+  const execName = (env.npm_execpath || "")
+    .split(/[\\/]/)
+    .at(-1)
+    .toLowerCase();
+
+  if (userAgent.startsWith("pnpm/") || /^pnp(?:m|x)(?:\.(?:c?js|cmd|exe))?$/.test(execName)) {
+    return `!pnpx ${CREDENTIAL_COMMAND}`;
+  }
+  if (userAgent.startsWith("bun/") || /^bunx?(?:\.exe)?$/.test(execName)) {
+    return `!bunx ${CREDENTIAL_COMMAND}`;
+  }
+  if (userAgent.startsWith("yarn/") || /^yarn(?:\.(?:c?js|cmd|exe))?$/.test(execName)) {
+    return `!yarn dlx ${CREDENTIAL_COMMAND}`;
+  }
+  return `!npx -y ${CREDENTIAL_COMMAND}`;
+}
 
 function validateRepoParts(owner, repo) {
   const cleanRepo = repo.endsWith(".git") ? repo.slice(0, -4) : repo;
@@ -135,7 +154,7 @@ export async function configureRepository({ root, owner, repo }) {
     "--local",
     "--add",
     "credential.helper",
-    CREDENTIAL_HELPER,
+    getCredentialHelper(),
   ]);
   await runGit(["-C", root, "config", "--local", "credential.useHttpPath", "true"]);
 }
