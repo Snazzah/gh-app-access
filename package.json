@@ -1,0 +1,37 @@
+{
+  "name": "@snazzah/gh-app-access",
+  "version": "0.1.0",
+  "description": "Access private GitHub repositories using a GitHub App.",
+  "author": "Snazzah",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/snazzah/gh-app-access.git"
+  },
+  "type": "module",
+  "bin": {
+    "gh-app-access": "./bin/cli.mjs"
+  },
+  "files": [
+    "bin",
+    "src",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "check": "node --check bin/cli.mjs && node --check src/config.mjs && node --check src/credential.mjs && node --check src/git.mjs && node --check src/github-app.mjs && node --check src/prompts.mjs"
+  },
+  "engines": {
+    "node": ">=24"
+  },
+  "packageManager": "pnpm@9.14.4",
+  "keywords": [
+    "github-app",
+    "git",
+    "credential-helper"
+  ],
+  "dependencies": {
+    "@clack/prompts": "^1.7.0",
+    "jose": "^6.2.10"
+  }
+}
