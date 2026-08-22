@@ -2,11 +2,21 @@
   "name": "@snazzah/gh-app-access",
   "version": "0.1.0",
   "description": "Access private GitHub repositories using a GitHub App.",
-  "author": "Snazzah",
+  "author": {
+    "name": "Snazzah",
+    "email": "me@snazzah.com",
+    "url": "https://snazzah.com/"
+  },
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/snazzah/gh-app-access.git"
+    "url": "git+https://github.com/Snazzah/gh-app-access.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Snazzah/gh-app-access/issues"
+  },
+  "funding": {
+    "url": "https://github.com/sponsors/Snazzah"
   },
   "type": "module",
   "bin": {
