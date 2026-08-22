@@ -1,6 +1,6 @@
 {
   "name": "@snazzah/gh-app-access",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Access private GitHub repositories using a GitHub App.",
   "author": {
     "name": "Snazzah",
