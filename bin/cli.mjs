@@ -20,6 +20,8 @@ import {
 import {
   GitHubAccessError,
   createAppJwt,
+  listAppInstallations,
+  listInstallationRepositories,
   mintInstallationToken,
 } from "../src/github-app.mjs";
 import { finishSetup, promptForSetup } from "../src/prompts.mjs";
@@ -35,6 +37,7 @@ Commands:
   setup                         Save GitHub App credentials
   clone <repo> [directory]      Clone a repository and configure credentials
   configure [directory]         Configure an existing repository
+  repos                         List repositories the GitHub App can access
   credential <get|store|erase>  Git credential helper protocol
 
 Options:
@@ -119,6 +122,42 @@ async function runConfigure(args) {
   console.log("Future plain git pull commands will use the GitHub App.");
 }
 
+async function runRepos(args) {
+  if (args.length > 0) {
+    throw usageError("repos does not accept arguments.");
+  }
+
+  const config = await getSavedConfig();
+  const installations = await listAppInstallations(config);
+
+  if (installations.length === 0) {
+    console.log("This GitHub App has no installations.");
+    return;
+  }
+
+  for (const installation of installations) {
+    const account = installation.account?.login ?? "(unknown)";
+    const selection = installation.repository_selection ?? "selected";
+    const suspended = installation.suspend_at ? " [suspended]" : "";
+
+    console.log(`\n#${installation.id} ${account} (${selection})${suspended}`);
+
+    const repositories = await listInstallationRepositories({
+      ...config,
+      installationId: installation.id,
+    });
+
+    if (repositories.length === 0) {
+      console.log("  (no repositories)");
+      continue;
+    }
+
+    for (const repository of repositories) {
+      console.log(`  ${repository.full_name ?? repository.name}${repository.private ? "" : " (public)"}`);
+    }
+  }
+}
+
 async function runCredential(args) {
   try {
     await answerCredentialRequest({ operation: args[0], input: process.stdin });
@@ -150,6 +189,9 @@ async function main(argv) {
       break;
     case "configure":
       await runConfigure(args);
+      break;
+    case "repos":
+      await runRepos(args);
       break;
     case "credential":
       await runCredential(args);

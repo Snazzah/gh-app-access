@@ -5,6 +5,7 @@ import { SignJWT } from "jose";
 const API_ROOT = "https://api.github.com";
 const API_VERSION = "2022-11-28";
 const REQUEST_TIMEOUT_MS = 30_000;
+const MAX_PAGES = 100;
 
 export class GitHubAccessError extends Error {
   constructor(owner, repo) {
@@ -67,6 +68,35 @@ async function githubRequest(pathname, { appJwt, method = "GET", body } = {}) {
   }
 
   return responseBody;
+}
+
+async function githubPaginate(pathname, options) {
+  const items = [];
+  let page = 1;
+
+  while (page <= MAX_PAGES) {
+    const separator = pathname.includes("?") ? "&" : "?";
+    const body = await githubRequest(`${pathname}${separator}per_page=100&page=${page}`, options);
+    if (!Array.isArray(body) || body.length === 0) break;
+    items.push(...body);
+    if (body.length < 100) break;
+    page += 1;
+  }
+
+  return items;
+}
+
+export async function listAppInstallations({ appId, privateKey }) {
+  const appJwt = await createAppJwt({ appId, privateKey });
+  return githubPaginate("/app/installations", { appJwt });
+}
+
+export async function listInstallationRepositories({ appId, privateKey, installationId }) {
+  const appJwt = await createAppJwt({ appId, privateKey });
+  return githubPaginate(
+    `/app/installations/${encodeURIComponent(installationId)}/repositories`,
+    { appJwt },
+  );
 }
 
 export async function mintInstallationToken({ appId, privateKey, owner, repo }) {
