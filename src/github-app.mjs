@@ -70,16 +70,17 @@ async function githubRequest(pathname, { appJwt, method = "GET", body } = {}) {
   return responseBody;
 }
 
-async function githubPaginate(pathname, options) {
+async function githubPaginate(pathname, options, collection) {
   const items = [];
   let page = 1;
 
   while (page <= MAX_PAGES) {
     const separator = pathname.includes("?") ? "&" : "?";
     const body = await githubRequest(`${pathname}${separator}per_page=100&page=${page}`, options);
-    if (!Array.isArray(body) || body.length === 0) break;
-    items.push(...body);
-    if (body.length < 100) break;
+    const pageItems = collection ? body[collection] : body;
+    if (!Array.isArray(pageItems) || pageItems.length === 0) break;
+    items.push(...pageItems);
+    if (pageItems.length < 100) break;
     page += 1;
   }
 
@@ -93,9 +94,17 @@ export async function listAppInstallations({ appId, privateKey }) {
 
 export async function listInstallationRepositories({ appId, privateKey, installationId }) {
   const appJwt = await createAppJwt({ appId, privateKey });
+  const tokenResponse = await githubRequest(
+    `/app/installations/${encodeURIComponent(installationId)}/access_tokens`,
+    { appJwt, method: "POST" },
+  );
+  if (typeof tokenResponse.token !== "string" || !tokenResponse.token) {
+    throw new Error("GitHub did not return an installation token.");
+  }
   return githubPaginate(
-    `/app/installations/${encodeURIComponent(installationId)}/repositories`,
-    { appJwt },
+    "/installation/repositories",
+    { appJwt: tokenResponse.token },
+    "repositories",
   );
 }
 

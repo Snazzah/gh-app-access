@@ -138,14 +138,21 @@ async function runRepos(args) {
   for (const installation of installations) {
     const account = installation.account?.login ?? "(unknown)";
     const selection = installation.repository_selection ?? "selected";
-    const suspended = installation.suspend_at ? " [suspended]" : "";
+    const suspended = installation.suspended_at ? " [suspended]" : "";
 
     console.log(`\n#${installation.id} ${account} (${selection})${suspended}`);
 
-    const repositories = await listInstallationRepositories({
-      ...config,
-      installationId: installation.id,
-    });
+    let repositories;
+    try {
+      repositories = await listInstallationRepositories({
+        ...config,
+        installationId: installation.id,
+      });
+    } catch (error) {
+      console.error(`  Could not list repositories for #${installation.id} ${account}: ${error.message}`);
+      process.exitCode = 1;
+      continue;
+    }
 
     if (repositories.length === 0) {
       console.log("  (no repositories)");
@@ -163,6 +170,7 @@ async function runCredential(args) {
     await answerCredentialRequest({ operation: args[0], input: process.stdin });
   } catch (error) {
     console.error(`gh-app-access credential: ${error.message}`);
+    process.exitCode = 1;
   }
 }
 

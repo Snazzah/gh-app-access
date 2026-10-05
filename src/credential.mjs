@@ -1,4 +1,4 @@
-import { ConfigNotFoundError, loadConfig } from "./config.mjs";
+import { loadConfig } from "./config.mjs";
 import { parseRepo } from "./git.mjs";
 import { mintInstallationToken } from "./github-app.mjs";
 
@@ -39,13 +39,7 @@ export async function answerCredentialRequest({ operation, input }) {
   const repo = parseCredentialRepo(parseCredentialInput(await readStream(input)));
   if (!repo) return;
 
-  let config;
-  try {
-    config = await loadConfig();
-  } catch (error) {
-    if (error instanceof ConfigNotFoundError) return;
-    throw error;
-  }
+  const config = await loadConfig();
 
   const token = await mintInstallationToken({ ...config, ...repo });
   process.stdout.write(`username=x-access-token\npassword=${token}\n\n`);
